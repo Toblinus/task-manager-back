@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String          @id @default(uuid())
+  username     String          @unique @db.VarChar(50)
+  password     String
+  avatar       String?
+  history      HistoryRecord[]
+  space        Space[]
+  spaceMembers SpaceMember[]
+  taskComments TaskComment[]
+  createdTasks Task[]          @relation("author")
+  tasks        Task[]          @relation("executor")
+
+  @@map("users")
+}
+
+model Space {
+  id           String          @id @default(uuid())
+  name         String          @db.VarChar(100)
+  ownerId      String          @map("owner_id")
+  columnSpace  ColumnSpace[]
+  history      HistoryRecord[]
+  owner        User            @relation(fields: [ownerId], references: [id])
+  spaceMembers SpaceMember[]
+  tasks        Task[]
+
+  @@map("space")
+}
+
+model ColumnSpace {
+  id         String       @id @default(uuid())
+  name       String       @db.VarChar(50)
+  spaceId    String       @map("space_id")
+  space      Space        @relation(fields: [spaceId], references: [id])
+  taskStatus TaskStatus[]
+
+  @@map("column_space")
+}
+
+model SpaceMember {
+  userId  String @map("user_id")
+  spaceId String @map("space_id")
+  space   Space  @relation(fields: [spaceId], references: [id])
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@id([spaceId, userId])
+  @@map("space_members")
+}
+
+model TaskStatus {
+  id            String      @id @default(uuid())
+  columnSpaceId String      @map("column_id")
+  name          String      @db.VarChar(25)
+  isCompleted   Boolean     @default(false) @map("is_completed")
+  column        ColumnSpace @relation(fields: [columnSpaceId], references: [id])
+  tasks         Task[]
+
+  @@map("task_status")
+}
+
+model Task {
+  id          String        @id @default(uuid())
+  spaceId     String        @map("space_id")
+  authorId    String        @map("author_id")
+  executorId  String        @map("executor_id")
+  statusId    String        @map("status_id")
+  title       String        @db.VarChar(50)
+  description String
+  createdAt   DateTime      @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime      @map("updated_at") @db.Timestamp(6)
+  executionAt DateTime      @map("execution_at") @db.Timestamp(6)
+  comments    TaskComment[]
+  author      User          @relation("author", fields: [authorId], references: [id])
+  executor    User          @relation("executor", fields: [executorId], references: [id])
+  space       Space         @relation(fields: [spaceId], references: [id])
+  status      TaskStatus    @relation(fields: [statusId], references: [id])
+
+  @@map("tasks")
+}
+
+model TaskComment {
+  id        String   @id @default(uuid())
+  authorId  String   @map("author_id")
+  taskId    String   @map("task_id")
+  createdAt DateTime @map("created_at") @db.Timestamp(6)
+  body      String
+  author    User     @relation(fields: [authorId], references: [id])
+  task      Task     @relation(fields: [taskId], references: [id])
+
+  @@map("task_comments")
+}
+
+model HistoryRecord {
+  id        String            @id @default(uuid())
+  spaceId   String            @map("space_id")
+  userId    String            @map("user_id")
+  timestamp DateTime          @db.Timestamp(6)
+  payload   Json?             @db.Json
+  type      HistoryRecordType
+  space     Space             @relation(fields: [spaceId], references: [id])
+  user      User              @relation(fields: [userId], references: [id])
+
+  @@map("history_records")
+}
+
+enum HistoryRecordType {
+  CREATE_SPACE
+  CRETAE_TASK
+  CHANGE_TASK_EXECUTOR
+  CHANGE_TASK_EXECUTION_DATE
+}

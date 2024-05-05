@@ -1,16 +1,22 @@
-import { exit } from 'node:process';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { connectDB } from './db';
+import { ValidationPipe } from '@nestjs/common';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as cookieParser from 'cookie-parser';
 
 async function bootstrap() {
-  try {
-    await connectDB('mongodb://192.168.0.73:27017/');
-  } catch (e) {
-    console.log('Ошибка подключения', e);
-    exit(1);
-  }
   const app = await NestFactory.create(AppModule);
+  app.useGlobalPipes(new ValidationPipe());
+  app.use(cookieParser());
+
+  const config = new DocumentBuilder()
+    .setTitle('Backend Swagger')
+    .setVersion(process.env.npm_package_version)
+    .addServer('./')
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('/', app, document);
+
   await app.listen(3000);
 }
 bootstrap();

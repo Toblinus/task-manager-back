@@ -16,21 +16,19 @@ export class SpaceService {
     userId: string,
     asUser: boolean = false,
   ) {
-    const space = await this.db.space.create({
-      data: {
-        name,
-        ownerId: userId,
-        id: asUser ? userId : undefined,
-      },
-    });
-
-    await this.columnService.createMany(space.id, [
-      'Создано',
-      'В работае',
-      'Завершено',
-    ]);
-
-    return space;
+    // const space = await this.db.space.create({
+    //   data: {
+    //     name,
+    //     ownerId: userId,
+    //     id: asUser ? userId : undefined,
+    //   },
+    // });
+    // await this.columnService.createMany(space.id, [
+    //   'Создано',
+    //   'В работае',
+    //   'Завершено',
+    // ]);
+    // return space;
   }
 
   async findAll() {

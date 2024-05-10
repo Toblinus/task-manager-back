@@ -2,14 +2,17 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
-import { TSuccessTokenPayload } from '../auth.service';
+import { TRefreshTokenPayload } from '../auth.service';
 import type { Request } from 'express';
 import { SessionService } from 'src/user/session/session.service';
 import type { UserWithSession } from '../types';
 import { ConfigService } from 'src/config/config.service';
 
 @Injectable()
-export class JwtStrategy extends PassportStrategy(Strategy) {
+export class JwtRefreshStrategy extends PassportStrategy(
+  Strategy,
+  'jwt-refresh',
+) {
   constructor(
     private userService: UserService,
     private sessionService: SessionService,
@@ -23,18 +26,29 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         },
       ]),
       ignoreExpiration: false,
-      secretOrKey: configService.getAccessTokenSecret('public'),
+      secretOrKey: configService.getRefreshTokenSecret('public'),
+      passReqToCallback: true,
     });
   }
 
-  async validate(payload: TSuccessTokenPayload): Promise<UserWithSession> {
-    const user = await this.userService.getById(payload.sub);
-    if (!user) {
-      throw new UnauthorizedException();
-    }
+  async validate(
+    request: Request,
+    payload: TRefreshTokenPayload,
+  ): Promise<UserWithSession> {
+    const currentUserAgent = request.headers['user-agent'];
 
     const session = await this.sessionService.getById(payload.session);
     if (!session) {
+      throw new UnauthorizedException();
+    }
+
+    if (currentUserAgent !== session.userAgent) {
+      // TODO: notify
+      throw new UnauthorizedException();
+    }
+
+    const user = await this.userService.getById(session.userId);
+    if (!user) {
       throw new UnauthorizedException();
     }
 

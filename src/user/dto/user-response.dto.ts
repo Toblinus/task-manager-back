@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { User } from '@prisma/client';
+import { UserWithoutPassword } from '../types';
 
 export class UserResonseDto {
   @ApiProperty({
@@ -19,7 +19,7 @@ export class UserResonseDto {
   })
   public readonly username: string;
 
-  constructor(from: User) {
+  constructor(from: UserWithoutPassword) {
     const { avatar, id, username } = from;
 
     this.avatar = avatar || 'default.png';

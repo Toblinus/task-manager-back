@@ -1,62 +1,91 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from 'src/database/prisma.service';
 import { CreateUserDto } from './dto/create-user.dto';
-import type { Response } from 'express';
-import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
-import { SpaceService } from 'src/space/space.service';
+import { UserSession } from '@prisma/client';
+// import { SpaceService } from 'src/space/space.service';
+import { UserService } from 'src/user/user.service';
+import { SessionService } from 'src/user/session/session.service';
+import { ConfigService } from 'src/config/config.service';
+import type { UserWithoutPassword } from 'src/user/types';
 
-type CookieSetter = Pick<Response, 'cookie'>;
-
-export type TJWTPayload = {
+export type TSuccessTokenPayload = {
   /** UUID пользователя */
   sub: string;
+  /** UUID сессии */
+  session: string;
+};
+
+export type TRefreshTokenPayload = {
+  /** UUID сессии */
+  session: string;
+  /** Значение из заголовка user-agent */
+  useragent: string;
 };
 
 @Injectable()
 export class AuthService {
   constructor(
-    private db: PrismaService,
-    private spaceService: SpaceService,
+    // private spaceService: SpaceService,
+    private userService: UserService,
+    private sessionService: SessionService,
+    private configService: ConfigService,
     private jwtService: JwtService,
   ) {}
 
-  async login(user: User, res: CookieSetter) {
-    const payload: TJWTPayload = { sub: user.id };
-    const accessToken = this.jwtService.sign(payload);
+  async login(user: UserWithoutPassword, userAgent: string) {
+    const session = await this.sessionService.create(user.id, userAgent);
 
-    res.cookie('token', accessToken, {
-      httpOnly: true,
-      maxAge: 4 * 60 * 60 * 1000,
-    });
-    return {
-      access_token: accessToken,
-    };
+    return await this.generateTokens(session);
   }
 
-  async registry(user: CreateUserDto, res: CookieSetter) {
-    const { username, password } = user;
-
-    const salt = await bcrypt.genSalt();
-
+  async registry(user: CreateUserDto, userAgent: string) {
     // Добавляем пользователя
-    const createdUser = await this.db.user.create({
-      data: {
-        username,
-        password: await bcrypt.hash(password, salt),
-      },
+    const createdUser = await this.userService.create(user);
+
+    // // Автоматически создаем личное пространство пользователя
+    // await this.spaceService.create(
+    //   {
+    //     name: `${createdUser.username} space`,
+    //   },
+    //   createdUser.id,
+    //   true,
+    // );
+
+    return [createdUser, await this.login(createdUser, userAgent)] as const;
+  }
+
+  async refreshToken(session: UserSession) {
+    return await this.generateTokens(session);
+  }
+
+  async logout(session: UserSession) {
+    await this.sessionService.remove(session.id);
+  }
+
+  private async generateTokens(session: UserSession) {
+    const successTokenPayload: TSuccessTokenPayload = {
+      sub: session.userId,
+      session: session.id,
+    };
+    const accessToken = await this.jwtService.signAsync(successTokenPayload, {
+      expiresIn: '15m',
+      secret: this.configService.getAccessTokenSecret('private'),
     });
 
-    // Автоматически создаем личное пространство пользователя
-    await this.spaceService.create(
-      {
-        name: `${username} space`,
-      },
-      createdUser.id,
-      true,
-    );
+    const refreshTokenPayload: TRefreshTokenPayload = {
+      session: session.id,
+      useragent: session.userAgent,
+    };
+    const refreshToken = await this.jwtService.signAsync(refreshTokenPayload, {
+      expiresIn: '7d',
+      secret: this.configService.getRefreshTokenSecret('private'),
+    });
 
-    return [createdUser, this.login(createdUser, res)] as const;
+    await this.sessionService.updateUsedTime(session.id);
+
+    return {
+      accessToken,
+      refreshToken,
+    };
   }
 }

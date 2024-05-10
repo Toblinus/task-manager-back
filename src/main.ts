@@ -13,6 +13,14 @@ async function bootstrap() {
     .setTitle('Backend Swagger')
     .setVersion(process.env.npm_package_version)
     .addServer('./')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'JWT',
+      description: 'Enter JWT token',
+      in: 'header',
+    })
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('/', app, document);

@@ -1,26 +1,41 @@
 import { Injectable } from '@nestjs/common';
 import { UserResonseDto } from './dto/user-response.dto';
-import { User } from '@prisma/client';
 import { PrismaService } from 'src/database/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { CreateUserDto } from './dto/create-user-dto';
+import { UserWithoutPassword } from './types';
 
 @Injectable()
 export class UserService {
   constructor(private db: PrismaService) {}
 
-  createResponse(user: User) {
+  createResponse(user: UserWithoutPassword) {
     return new UserResonseDto(user);
   }
 
-  async checkPassword(
-    userOrLogin: string | User,
-    password: string,
-  ): Promise<boolean> {
+  async create(user: CreateUserDto) {
+    const { username, password } = user;
+
+    const salt = await bcrypt.genSalt();
+
+    // Добавляем пользователя
+    const createdUser = await this.db.user.create({
+      data: {
+        username,
+        password: await bcrypt.hash(password, salt),
+      },
+    });
+
+    return createdUser;
+  }
+
+  async checkPassword(username: string, password: string): Promise<boolean> {
     try {
-      const user =
-        typeof userOrLogin === 'string'
-          ? await this.getByLogin(userOrLogin)
-          : userOrLogin;
+      const user = await this.getFullByLogin(username);
+
+      if (!user) {
+        return false;
+      }
 
       const { password: passwordHash } = user;
 
@@ -30,19 +45,39 @@ export class UserService {
     }
   }
 
-  async getById(id: string): Promise<User> {
+  async getById(id: string) {
     try {
-      return await this.db.user.findFirstOrThrow({
+      const user = await this.db.user.findFirstOrThrow({
         where: {
           id,
         },
       });
+
+      return this.createResponse(user);
     } catch {
       return null;
     }
   }
 
-  async getByLogin(username: string): Promise<User> {
+  async remove(id: string) {
+    await this.db.user.delete({
+      where: {
+        id,
+      },
+    });
+  }
+
+  async getByLogin(username: string) {
+    try {
+      const user = await this.getFullByLogin(username);
+
+      return user ? this.createResponse(user) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async getFullByLogin(username: string) {
     try {
       return await this.db.user.findFirstOrThrow({
         where: {

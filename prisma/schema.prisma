@@ -8,39 +8,43 @@ datasource db {
 }
 
 model User {
-  id           String          @id @default(uuid())
-  username     String          @unique @db.VarChar(50)
-  password     String
-  avatar       String?
-  history      HistoryRecord[]
-  space        Space[]
-  spaceMembers SpaceMember[]
-  taskComments TaskComment[]
-  createdTasks Task[]          @relation("author")
-  tasks        Task[]          @relation("executor")
+  id            String          @id @default(uuid())
+  username      String          @unique @db.VarChar(50)
+  password      String
+  avatar        String?
+  history       HistoryRecord[]
+  space         Space[]
+  spaceMembers  SpaceMember[]
+  taskComments  TaskComment[]
+  createdTasks  Task[]          @relation("author")
+  tasks         Task[]          @relation("executor")
+  userSessions  UserSession[]
+  notifications Notification[]
 
   @@map("users")
 }
 
 model Space {
-  id           String          @id @default(uuid())
-  name         String          @db.VarChar(100)
-  ownerId      String          @map("owner_id")
-  columnSpace  ColumnSpace[]
-  history      HistoryRecord[]
-  owner        User            @relation(fields: [ownerId], references: [id])
-  spaceMembers SpaceMember[]
-  tasks        Task[]
+  id                  String          @id @default(uuid())
+  name                String          @db.VarChar(100)
+  ownerId             String          @map("owner_id")
+  defaultTaskStatusId String          @map("default_task_status_id")
+  defaultTaskStatus   TaskStatus      @relation(fields: [defaultTaskStatusId], references: [id])
+  columnSpace         ColumnSpace[]
+  history             HistoryRecord[]
+  owner               User            @relation(fields: [ownerId], references: [id])
+  spaceMembers        SpaceMember[]
+  tasks               Task[]
 
   @@map("space")
 }
 
 model ColumnSpace {
-  id         String       @id @default(uuid())
-  name       String       @db.VarChar(50)
-  spaceId    String       @map("space_id")
-  space      Space        @relation(fields: [spaceId], references: [id])
-  taskStatus TaskStatus[]
+  id           String       @id @default(uuid())
+  name         String       @db.VarChar(50)
+  spaceId      String       @map("space_id")
+  space        Space        @relation(fields: [spaceId], references: [id])
+  taskStatuses TaskStatus[]
 
   @@map("column_space")
 }
@@ -56,12 +60,13 @@ model SpaceMember {
 }
 
 model TaskStatus {
-  id            String      @id @default(uuid())
-  columnSpaceId String      @map("column_id")
-  name          String      @db.VarChar(25)
-  isCompleted   Boolean     @default(false) @map("is_completed")
-  column        ColumnSpace @relation(fields: [columnSpaceId], references: [id])
-  tasks         Task[]
+  id             String      @id @default(uuid())
+  columnId       String      @map("column_id")
+  name           String      @db.VarChar(25)
+  isCompleted    Boolean     @default(false) @map("is_completed")
+  column         ColumnSpace @relation(fields: [columnId], references: [id])
+  tasks          Task[]
+  defaultInSpace Space[]
 
   @@map("task_status")
 }
@@ -74,9 +79,9 @@ model Task {
   statusId    String        @map("status_id")
   title       String        @db.VarChar(50)
   description String
-  createdAt   DateTime      @map("created_at") @db.Timestamp(6)
-  updatedAt   DateTime      @map("updated_at") @db.Timestamp(6)
-  executionAt DateTime      @map("execution_at") @db.Timestamp(6)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt   DateTime      @map("updated_at") @db.Timestamp()
+  executionAt DateTime      @map("execution_at") @db.Timestamp()
   comments    TaskComment[]
   author      User          @relation("author", fields: [authorId], references: [id])
   executor    User          @relation("executor", fields: [executorId], references: [id])
@@ -90,7 +95,8 @@ model TaskComment {
   id        String   @id @default(uuid())
   authorId  String   @map("author_id")
   taskId    String   @map("task_id")
-  createdAt DateTime @map("created_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt DateTime @map("updated_at") @db.Timestamp()
   body      String
   author    User     @relation(fields: [authorId], references: [id])
   task      Task     @relation(fields: [taskId], references: [id])
@@ -102,7 +108,7 @@ model HistoryRecord {
   id        String            @id @default(uuid())
   spaceId   String            @map("space_id")
   userId    String            @map("user_id")
-  timestamp DateTime          @db.Timestamp(6)
+  timestamp DateTime          @default(now()) @db.Timestamp()
   payload   Json?             @db.Json
   type      HistoryRecordType
   space     Space             @relation(fields: [spaceId], references: [id])
@@ -111,9 +117,35 @@ model HistoryRecord {
   @@map("history_records")
 }
 
+model UserSession {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  userAgent String   @map("user_agent")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
+  usedAt    DateTime @default(now()) @map("used_at") @db.Timestamp()
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@map("user_sessions")
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  recipientId String           @map("recipient_id")
+  isViewed    Boolean          @default(false)
+  payload     Json             @db.Json
+  type        NotificationType
+  recipient   User             @relation(fields: [recipientId], references: [id])
+
+  @@map("notifications")
+}
+
 enum HistoryRecordType {
   CREATE_SPACE
   CRETAE_TASK
   CHANGE_TASK_EXECUTOR
   CHANGE_TASK_EXECUTION_DATE
+}
+
+enum NotificationType {
+  INFO
 }

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { CreateUserDto } from './dto/create-user.dto';
 import { UserSession } from '@prisma/client';
 // import { SpaceService } from 'src/space/space.service';
 import { UserService } from 'src/user/user.service';
 import { SessionService } from 'src/user/session/session.service';
 import { ConfigService } from 'src/config/config.service';
 import type { UserWithoutPassword } from 'src/user/types';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 export type TSuccessTokenPayload = {
   /** UUID пользователя */

@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
-import { CreateUserDto } from './dto/create-user.dto';
 import {
   ApiOperation,
   ApiResponse,
@@ -22,6 +21,7 @@ import { UserLoginDto } from './dto/user-login.dto';
 import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { UserTokensResponseDto } from './dto/user-token-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @ApiTags('AuthController')
 @Controller('auth')

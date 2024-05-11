@@ -2,8 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { UserResonseDto } from './dto/user-response.dto';
 import { PrismaService } from 'src/database/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { CreateUserDto } from './dto/create-user-dto';
+import { CreateUserDto } from './dto/create-user.dto';
 import { UserWithoutPassword } from './types';
+import { UsersListResponseDto } from './dto/users-list-response.dto';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -16,13 +18,11 @@ export class UserService {
   async create(user: CreateUserDto) {
     const { username, password } = user;
 
-    const salt = await bcrypt.genSalt();
-
     // Добавляем пользователя
     const createdUser = await this.db.user.create({
       data: {
         username,
-        password: await bcrypt.hash(password, salt),
+        password: await this.hashPassword(password),
       },
     });
 
@@ -59,6 +59,36 @@ export class UserService {
     }
   }
 
+  async getAll() {
+    const users = await this.db.user.findMany();
+    return new UsersListResponseDto(users);
+  }
+
+  async update(id: string, user: Partial<Omit<User, 'id'>>) {
+    const valuesForUpdate: typeof user = {};
+
+    if (user.avatar) {
+      valuesForUpdate.avatar = user.avatar;
+    }
+
+    if (user.username) {
+      valuesForUpdate.username = user.username;
+    }
+
+    if (user.password) {
+      valuesForUpdate.password = await this.hashPassword(user.password);
+    }
+
+    const updatedUser = await this.db.user.update({
+      where: {
+        id,
+      },
+      data: valuesForUpdate,
+    });
+
+    return this.createResponse(updatedUser);
+  }
+
   async remove(id: string) {
     await this.db.user.delete({
       where: {
@@ -87,5 +117,10 @@ export class UserService {
     } catch {
       return null;
     }
+  }
+
+  private async hashPassword(password: string) {
+    const salt = await bcrypt.genSalt();
+    return await bcrypt.hash(password, salt);
   }
 }

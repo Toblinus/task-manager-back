@@ -1,54 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { CreateSpaceDto } from './dto/create-space.dto';
 import { UpdateSpaceDto } from './dto/update-space.dto';
 import { PrismaService } from 'src/database/prisma.service';
-import { ColumnService } from './column/column.service';
+import { SpaceResponseDto } from './dto/space-response.dto';
+import { SpaceListResponse } from './dto/space-list-response.dto';
+import { UsersListResponseDto } from 'src/user/dto/users-list-response.dto';
 
 @Injectable()
 export class SpaceService {
-  constructor(
-    private readonly db: PrismaService,
-    private readonly columnService: ColumnService,
-  ) {}
+  constructor(private readonly db: PrismaService) {}
 
-  async create(
-    { name }: CreateSpaceDto,
-    userId: string,
-    asUser: boolean = false,
-  ) {
-    // const space = await this.db.space.create({
-    //   data: {
-    //     name,
-    //     ownerId: userId,
-    //     id: asUser ? userId : undefined,
-    //   },
-    // });
-    // await this.columnService.createMany(space.id, [
-    //   'Создано',
-    //   'В работае',
-    //   'Завершено',
-    // ]);
-    // return space;
-  }
+  async findByUserId(userId: string) {
+    const space = await this.db.spaceMember.findMany({
+      where: { userId },
+      select: { space: true },
+    });
 
-  async findAll() {
-    return await this.db.space.findMany();
+    return new SpaceListResponse(space.map((item) => item.space));
   }
 
   async findOne(id: string) {
-    return await this.db.space.findFirst({
+    const space = await this.db.space.findFirst({
       where: {
         id,
       },
     });
+
+    return new SpaceResponseDto(space);
   }
 
-  async update(id: string, { name }: UpdateSpaceDto, userId: string) {
-    if (!(await this.isOwner(id, userId))) {
-      // @TODO: add error 403
-      return;
-    }
-
+  async update(id: string, { name }: UpdateSpaceDto) {
     const space = await this.db.space.update({
       data: {
         name,
@@ -57,15 +37,11 @@ export class SpaceService {
         id,
       },
     });
-    return space;
+
+    return new SpaceResponseDto(space);
   }
 
-  async remove(id: string, userId: string) {
-    if (!(await this.isOwner(id, userId))) {
-      // @TODO: add error 403
-      return;
-    }
-
+  async remove(id: string) {
     await this.db.space.delete({
       where: {
         id,
@@ -74,12 +50,38 @@ export class SpaceService {
   }
 
   public async isOwner(spaceId: string, userId: string) {
-    const space = await this.findOne(userId);
+    const space = await this.findOne(spaceId);
 
     if (!space) {
       return false;
     }
 
     return userId === space.ownerId;
+  }
+
+  public async addMembers(spaceId: string, memberIds: string[]) {
+    await this.db.spaceMember.createMany({
+      skipDuplicates: true,
+      data: memberIds.map((userId) => ({ spaceId, userId })),
+    });
+
+    return this.getMembers(spaceId);
+  }
+
+  public async removeMembers(spaceId: string, memberIds: string[]) {
+    await this.db.spaceMember.deleteMany({
+      where: { OR: memberIds.map((userId) => ({ spaceId, userId })) },
+    });
+
+    return this.getMembers(spaceId);
+  }
+
+  public async getMembers(spaceId: string) {
+    const members = await this.db.spaceMember.findMany({
+      where: { spaceId },
+      select: { user: true },
+    });
+
+    return new UsersListResponseDto(members.map((item) => item.user));
   }
 }

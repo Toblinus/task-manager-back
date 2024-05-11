@@ -59,8 +59,13 @@ export class UserService {
     }
   }
 
-  async getAll() {
-    const users = await this.db.user.findMany();
+  async getAll(userIds: string[] = []) {
+    const users = await this.db.user.findMany({
+      where:
+        userIds?.length > 0
+          ? { OR: userIds.map((userId) => ({ id: userId })) }
+          : undefined,
+    });
     return new UsersListResponseDto(users);
   }
 

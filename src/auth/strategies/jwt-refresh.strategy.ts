@@ -4,7 +4,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { TRefreshTokenPayload } from '../auth.service';
 import type { Request } from 'express';
-import { SessionService } from 'src/user/session/session.service';
+import { SessionService } from 'src/auth/session/session.service';
 import type { UserWithSession } from '../types';
 import { ConfigService } from 'src/config/config.service';
 
@@ -42,7 +42,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
       throw new UnauthorizedException();
     }
 
-    if (currentUserAgent !== session.userAgent) {
+    if (currentUserAgent !== session.userAgent.raw) {
       // TODO: notify
       throw new UnauthorizedException();
     }

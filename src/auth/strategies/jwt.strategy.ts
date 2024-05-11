@@ -4,7 +4,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UserService } from 'src/user/user.service';
 import { TSuccessTokenPayload } from '../auth.service';
 import type { Request } from 'express';
-import { SessionService } from 'src/user/session/session.service';
+import { SessionService } from 'src/auth/session/session.service';
 import type { UserWithSession } from '../types';
 import { ConfigService } from 'src/config/config.service';
 

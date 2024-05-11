@@ -5,7 +5,7 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { UserService } from 'src/user/user.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import { SessionModule } from 'src/user/session/session.module';
+import { SessionModule } from 'src/auth/session/session.module';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 
 @Module({

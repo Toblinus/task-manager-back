@@ -24,10 +24,10 @@ import { SessionService } from './session.service';
 import { SessionResponseDto } from './dto/session-response.dto';
 import { SessionsListResponseDto } from './dto/sessions-list-response.dto';
 
-@ApiTags('SessionsController')
+@ApiTags('Auth')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
-@Controller('sessions')
+@Controller('auth/sessions')
 export class SessionController {
   constructor(private readonly sessionService: SessionService) {}
 

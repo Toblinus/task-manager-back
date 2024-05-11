@@ -3,10 +3,11 @@ import { JwtService } from '@nestjs/jwt';
 import { UserSession } from '@prisma/client';
 // import { SpaceService } from 'src/space/space.service';
 import { UserService } from 'src/user/user.service';
-import { SessionService } from 'src/user/session/session.service';
+import { SessionService } from 'src/auth/session/session.service';
 import { ConfigService } from 'src/config/config.service';
 import type { UserWithoutPassword } from 'src/user/types';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { SessionResponseDto } from './session/dto/session-response.dto';
 
 export type TSuccessTokenPayload = {
   /** UUID пользователя */
@@ -54,15 +55,15 @@ export class AuthService {
     return [createdUser, await this.login(createdUser, userAgent)] as const;
   }
 
-  async refreshToken(session: UserSession) {
+  async refreshToken(session: UserSession | SessionResponseDto) {
     return await this.generateTokens(session);
   }
 
-  async logout(session: UserSession) {
+  async logout(session: UserSession | SessionResponseDto) {
     await this.sessionService.remove(session.id);
   }
 
-  private async generateTokens(session: UserSession) {
+  private async generateTokens(session: UserSession | SessionResponseDto) {
     const successTokenPayload: TSuccessTokenPayload = {
       sub: session.userId,
       session: session.id,
@@ -74,7 +75,10 @@ export class AuthService {
 
     const refreshTokenPayload: TRefreshTokenPayload = {
       session: session.id,
-      useragent: session.userAgent,
+      useragent:
+        typeof session.userAgent === 'string'
+          ? session.userAgent
+          : session.userAgent.raw,
     };
     const refreshToken = await this.jwtService.signAsync(refreshTokenPayload, {
       expiresIn: '7d',

@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/database/prisma.service';
+import { SessionsListResponseDto } from './dto/sessions-list-response.dto';
+import { SessionResponseDto } from './dto/session-response.dto';
 
 @Injectable()
 export class SessionService {
@@ -26,11 +28,13 @@ export class SessionService {
 
   async getById(id: string) {
     try {
-      return await this.db.userSession.findFirstOrThrow({
+      const session = await this.db.userSession.findFirstOrThrow({
         where: {
           id,
         },
       });
+
+      return new SessionResponseDto(session);
     } catch {
       return null;
     }
@@ -38,13 +42,13 @@ export class SessionService {
 
   async getByUserId(userId: string) {
     try {
-      return {
-        sessions: await this.db.userSession.findMany({
-          where: {
-            userId,
-          },
-        }),
-      };
+      const sessions = await this.db.userSession.findMany({
+        where: {
+          userId,
+        },
+      });
+
+      return new SessionsListResponseDto(sessions);
     } catch {
       return { sessions: [] };
     }

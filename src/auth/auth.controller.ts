@@ -23,7 +23,7 @@ import { UserTokensResponseDto } from './dto/user-token-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
-@ApiTags('AuthController')
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(

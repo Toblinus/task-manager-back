@@ -26,11 +26,15 @@ import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Request } from 'express';
 import { UsersListResponseDto } from './dto/users-list-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { SpaceService } from 'src/space/space.service';
 
-@ApiTags('UsersController')
+@ApiTags('Users')
 @Controller('users')
 export class UserController {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private spaceService: SpaceService,
+  ) {}
 
   @ApiResponse({
     status: 200,
@@ -132,5 +136,40 @@ export class UserController {
   @HttpCode(204)
   removeCurrent(@Req() req: Request) {
     return this.userService.remove(req.user.id);
+  }
+
+  @ApiTags('Space')
+  @ApiResponse({
+    status: 200,
+    description: 'Пространства задач',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Пользователь не авторизован',
+  })
+  @ApiOperation({ summary: 'Получение всех пространств пользователя' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Get('current/space')
+  async findSpaceListByCurrent(@Req() req: Request) {
+    return this.spaceService.findByUserId(req.user.id);
+  }
+
+  @ApiTags('PublicApi')
+  @ApiResponse({
+    status: 200,
+    description: 'Пространства задач',
+  })
+  @ApiNotFoundResponse({ description: 'Пользователь не найден' })
+  @ApiOperation({ summary: 'Получение всех пространств пользователя' })
+  @Get(':id/space')
+  async findSpaceList(@Param('id', new ParseUUIDPipe()) id: string) {
+    const user = this.userService.getById(id);
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    return this.spaceService.findByUserId(id);
   }
 }

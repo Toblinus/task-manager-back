@@ -28,8 +28,8 @@ model Space {
   id                  String          @id @default(uuid())
   name                String          @db.VarChar(100)
   ownerId             String          @map("owner_id")
-  defaultTaskStatusId String          @map("default_task_status_id")
-  defaultTaskStatus   TaskStatus      @relation(fields: [defaultTaskStatusId], references: [id])
+  defaultTaskStatusId String?         @map("default_task_status_id")
+  defaultTaskStatus   TaskStatus?     @relation(fields: [defaultTaskStatusId], references: [id])
   columnSpace         ColumnSpace[]
   history             HistoryRecord[]
   owner               User            @relation(fields: [ownerId], references: [id])

@@ -12,8 +12,8 @@ import {
   Req,
   ForbiddenException,
 } from '@nestjs/common';
-import { ColumnService } from './column.service';
-import { UpdateColumnDto } from './dto/update-column.dto';
+import { TaskStatusService } from './task.status.service';
+import { UpdateTaskStatusDto } from './dto/update-task-status.dto';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
@@ -24,45 +24,45 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 import { SpaceService } from '../space.service';
-import { ColumnResponseDto } from './dto/column-response.dto';
+import { TaskStatusResponseDto } from './dto/task-status-response.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
 import { Request } from 'express';
 
-@ApiTags('Columns')
-@Controller('space/columns')
-export class ColumnController {
+@ApiTags('Task statuses')
+@Controller('space/statuses')
+export class TaskStatusController {
   constructor(
-    private readonly columnService: ColumnService,
+    private readonly taskStatusService: TaskStatusService,
     private readonly spaceService: SpaceService,
   ) {}
 
   @ApiTags('PublicApi')
   @ApiResponse({
     status: 200,
-    description: 'Столбец получен по id',
-    type: ColumnResponseDto,
+    description: 'Статус получен по id',
+    type: TaskStatusResponseDto,
   })
   @ApiBadRequestResponse({ description: 'Ошибка валидации' })
-  @ApiNotFoundResponse({ description: 'Столбец не найден' })
+  @ApiNotFoundResponse({ description: 'Статус не найден' })
   @ApiOperation({
-    summary: 'Получение столбца по id',
+    summary: 'Получение статуса по id',
   })
   @Get(':id')
   @HttpCode(200)
   async findOne(@Param('id', new ParseUUIDPipe()) id: string) {
-    const column = await this.columnService.findOne(id);
+    const status = await this.taskStatusService.findOne(id);
 
-    if (!column) {
+    if (!status) {
       throw new NotFoundException();
     }
 
-    return column;
+    return status;
   }
 
   @ApiResponse({
     status: 200,
-    description: 'Столбец обновлен',
-    type: ColumnResponseDto,
+    description: 'Статус обновлен',
+    type: TaskStatusResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -70,34 +70,36 @@ export class ColumnController {
   })
   @ApiBadRequestResponse({ description: 'Ошибка валидации' })
   @ApiForbiddenResponse({ description: 'Операция не разрешена' })
-  @ApiNotFoundResponse({ description: 'Столбец не найден' })
-  @ApiOperation({ summary: 'Изменение столбца' })
+  @ApiNotFoundResponse({ description: 'Статус не найден' })
+  @ApiOperation({ summary: 'Изменение статуса' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Patch(':id')
   @HttpCode(200)
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() updateColumnDto: UpdateColumnDto,
+    @Body() updateColumnDto: UpdateTaskStatusDto,
     @Req() req: Request,
   ) {
-    const column = await this.columnService.findOne(id);
+    const status = await this.taskStatusService.findOne(id);
 
-    if (!column) {
+    if (!status) {
       throw new NotFoundException();
     }
 
-    if (!(await this.spaceService.isOwner(column.space.id, req.user.id))) {
+    if (
+      !(await this.spaceService.isOwner(status.column.space.id, req.user.id))
+    ) {
       throw new ForbiddenException();
     }
 
-    return this.columnService.update(id, updateColumnDto);
+    return this.taskStatusService.update(id, updateColumnDto);
   }
 
   @ApiResponse({
     status: 204,
     description: 'Столбец удален',
-    type: ColumnResponseDto,
+    type: TaskStatusResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -105,7 +107,7 @@ export class ColumnController {
   })
   @ApiBadRequestResponse({ description: 'Ошибка валидации' })
   @ApiForbiddenResponse({ description: 'Операция не разрешена' })
-  @ApiNotFoundResponse({ description: 'Столбец не найден' })
+  @ApiNotFoundResponse({ description: 'Статус не найден' })
   @ApiOperation({ summary: 'Удаление столбца' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -115,16 +117,18 @@ export class ColumnController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Req() req: Request,
   ) {
-    const column = await this.columnService.findOne(id);
+    const status = await this.taskStatusService.findOne(id);
 
-    if (!column) {
+    if (!status) {
       throw new NotFoundException();
     }
 
-    if (!(await this.spaceService.isOwner(column.space.id, req.user.id))) {
+    if (
+      !(await this.spaceService.isOwner(status.column.space.id, req.user.id))
+    ) {
       throw new ForbiddenException();
     }
 
-    return this.columnService.remove(id);
+    return this.taskStatusService.remove(id);
   }
 }

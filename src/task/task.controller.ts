@@ -34,6 +34,10 @@ import { TaskStatusService } from 'src/space/task-status/task.status.service';
 import { TaskResponseDto } from './dto/task-response.dto';
 import { QueryFindTasksDto } from './dto/query-find-tasks.dto';
 import { TasksListResponseDto } from './dto/tasks-list-response.dto';
+import { CommentService } from './comment/comment.service';
+import { CreateCommentDto } from './comment/dto/create-comment.dto';
+import { CommentResponseDto } from './comment/dto/comment-response.dto';
+import { CommentsListResponseDto } from './comment/dto/comments-list-response.dto';
 
 @ApiTags('Tasks')
 @Controller('tasks')
@@ -43,6 +47,7 @@ export class TaskController {
     private readonly spaceService: SpaceService,
     private readonly userService: UserService,
     private readonly taskStatusService: TaskStatusService,
+    private readonly commentService: CommentService,
   ) {}
 
   @ApiResponse({
@@ -279,5 +284,69 @@ export class TaskController {
     }
 
     await this.taskService.remove(id);
+  }
+
+  @ApiTags('Task comments')
+  @ApiResponse({
+    status: 201,
+    description: 'Комментарий создан',
+    type: CommentResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Пользователь не авторизован',
+  })
+  @ApiBadRequestResponse({ description: 'Ошибка валидации' })
+  @ApiForbiddenResponse({ description: 'Операция не разрешена' })
+  @ApiNotFoundResponse({ description: 'Задача не найдена' })
+  @ApiOperation({ summary: 'Создание комментария' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/comments')
+  async addComment(
+    @Body() comment: CreateCommentDto,
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Req() request: Request,
+  ) {
+    const authorId = request.user.id;
+
+    const task = await this.taskService.findOne(id);
+
+    const canCreateTask = await this.spaceService.isMember(
+      task.space.id,
+      authorId,
+    );
+
+    if (!canCreateTask) {
+      throw new ForbiddenException();
+    }
+
+    if (!task) {
+      throw new NotFoundException();
+    }
+
+    return this.commentService.create(authorId, id, comment);
+  }
+
+  @ApiTags('PublicApi', 'Task comments')
+  @ApiResponse({
+    status: 200,
+    description: 'Комментарии получены',
+    type: CommentsListResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Ошибка валидации' })
+  @ApiNotFoundResponse({ description: 'Задача не найдена' })
+  @ApiOperation({
+    summary: 'Получение комментариев по id задачи',
+  })
+  @Get(':id/comments')
+  async getComments(@Param('id', new ParseUUIDPipe()) id: string) {
+    const task = await this.taskService.findOne(id);
+
+    if (!task) {
+      throw new NotFoundException();
+    }
+
+    return this.commentService.findByTask(id);
   }
 }

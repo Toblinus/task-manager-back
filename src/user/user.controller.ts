@@ -27,6 +27,8 @@ import { Request } from 'express';
 import { UsersListResponseDto } from './dto/users-list-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { SpaceService } from 'src/space/space.service';
+import { CommentsListResponseDto } from 'src/task/comment/dto/comments-list-response.dto';
+import { CommentService } from 'src/task/comment/comment.service';
 
 @ApiTags('Users')
 @Controller('users')
@@ -34,6 +36,7 @@ export class UserController {
   constructor(
     private userService: UserService,
     private spaceService: SpaceService,
+    private readonly commentService: CommentService,
   ) {}
 
   @ApiResponse({
@@ -171,5 +174,27 @@ export class UserController {
     }
 
     return this.spaceService.findByUserId(id);
+  }
+
+  @ApiTags('PublicApi', 'Task comments')
+  @ApiResponse({
+    status: 200,
+    description: 'Комментарии получены',
+    type: CommentsListResponseDto,
+  })
+  @ApiBadRequestResponse({ description: 'Ошибка валидации' })
+  @ApiNotFoundResponse({ description: 'Пользователь не найден' })
+  @ApiOperation({
+    summary: 'Получение комментариев по id пользователя',
+  })
+  @Get(':id/comments')
+  async getComments(@Param('id', new ParseUUIDPipe()) id: string) {
+    const user = await this.userService.getById(id);
+
+    if (!user) {
+      throw new NotFoundException();
+    }
+
+    return this.commentService.findByUser(id);
   }
 }

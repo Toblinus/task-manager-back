@@ -92,14 +92,14 @@ model Task {
 }
 
 model TaskComment {
-  id        String   @id @default(uuid())
-  authorId  String   @map("author_id")
-  taskId    String   @map("task_id")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt DateTime @map("updated_at") @db.Timestamp()
+  id        String    @id @default(uuid())
+  authorId  String    @map("author_id")
+  taskId    String    @map("task_id")
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt DateTime? @map("updated_at") @db.Timestamp()
   body      String
-  author    User     @relation(fields: [authorId], references: [id])
-  task      Task     @relation(fields: [taskId], references: [id])
+  author    User      @relation(fields: [authorId], references: [id])
+  task      Task      @relation(fields: [taskId], references: [id])
 
   @@map("task_comments")
 }

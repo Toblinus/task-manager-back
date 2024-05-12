@@ -101,7 +101,10 @@ export class TaskService {
   async update(id: string, updateTaskDto: UpdateTaskDto) {
     const task = await this.db.task.update({
       where: { id },
-      data: updateTaskDto,
+      data: {
+        ...updateTaskDto,
+        updatedAt: new Date(),
+      },
       include: {
         author: true,
         executor: true,

@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Space, Task, User } from '@prisma/client';
 import { SpaceResponseDto } from 'src/space/dto/space-response.dto';
 import {
@@ -39,7 +39,7 @@ export class TaskResponseDto {
   @ApiProperty({ description: 'Дата создания задачи' })
   createdAt: Date;
 
-  @ApiProperty({ description: 'Дата обновления задачи' })
+  @ApiPropertyOptional({ description: 'Дата обновления задачи' })
   updatedAt: Date | null;
 
   @ApiProperty({ description: 'Дата исполнения задачи' })

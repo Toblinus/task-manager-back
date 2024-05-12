@@ -5,15 +5,17 @@ import { ValidatorModule } from './validator/validator.module';
 import { SpaceModule } from './space/space.module';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from './config/config.module';
+import { TaskModule } from './task/task.module';
 
 @Module({
   imports: [
+    ConfigModule,
     DatabaseModule,
-    SpaceModule,
     AuthModule,
     UserModule,
+    SpaceModule,
+    TaskModule,
     ValidatorModule,
-    ConfigModule,
   ],
 })
 export class AppModule {}

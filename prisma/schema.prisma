@@ -79,8 +79,8 @@ model Task {
   statusId    String        @map("status_id")
   title       String        @db.VarChar(50)
   description String
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp()
-  updatedAt   DateTime      @map("updated_at") @db.Timestamp()
+  createdAt   DateTime?     @default(now()) @map("created_at") @db.Timestamp()
+  updatedAt   DateTime?     @map("updated_at") @db.Timestamp()
   executionAt DateTime      @map("execution_at") @db.Timestamp()
   comments    TaskComment[]
   author      User          @relation("author", fields: [authorId], references: [id])

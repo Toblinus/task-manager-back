@@ -59,6 +59,20 @@ export class SpaceService {
     return userId === space.ownerId;
   }
 
+  public async isMember(spaceId: string, userId: string) {
+    try {
+      await this.db.spaceMember.findFirstOrThrow({
+        where: {
+          spaceId,
+          userId,
+        },
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   public async addMembers(spaceId: string, memberIds: string[]) {
     await this.db.spaceMember.createMany({
       skipDuplicates: true,

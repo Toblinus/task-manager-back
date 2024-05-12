@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsString, IsOptional } from 'class-validator';
+import { IsBoolean, IsString, IsOptional, IsUUID } from 'class-validator';
 
 export class CreateTaskStatusDto {
   @ApiProperty({ description: 'Название статуса' })
@@ -8,6 +8,7 @@ export class CreateTaskStatusDto {
 
   @ApiProperty({ description: 'UUID столбца' })
   @IsString()
+  @IsUUID()
   columnId: string;
 
   @ApiPropertyOptional({ description: 'Статус является завершающим' })

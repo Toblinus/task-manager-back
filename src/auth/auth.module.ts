@@ -7,16 +7,11 @@ import { UserService } from 'src/user/user.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { SessionModule } from 'src/auth/session/session.module';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
+import { SpaceModule } from 'src/space/space.module';
 
 @Module({
-  imports: [PassportModule, JwtModule.register({}), SessionModule],
-  providers: [
-    AuthService,
-    UserService,
-    JwtStrategy,
-    JwtRefreshStrategy,
-    // SpaceService,
-  ],
+  imports: [PassportModule, JwtModule.register({}), SessionModule, SpaceModule],
+  providers: [AuthService, UserService, JwtStrategy, JwtRefreshStrategy],
   controllers: [AuthController],
   exports: [JwtStrategy],
 })

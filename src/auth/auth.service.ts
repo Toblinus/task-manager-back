@@ -8,6 +8,7 @@ import { ConfigService } from 'src/config/config.service';
 import type { UserWithoutPassword } from 'src/user/types';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 import { SessionResponseDto } from './session/dto/session-response.dto';
+import { SpaceInitializerService } from 'src/space/space-initializer.service';
 
 export type TSuccessTokenPayload = {
   /** UUID пользователя */
@@ -26,7 +27,7 @@ export type TRefreshTokenPayload = {
 @Injectable()
 export class AuthService {
   constructor(
-    // private spaceService: SpaceService,
+    private spaceService: SpaceInitializerService,
     private userService: UserService,
     private sessionService: SessionService,
     private configService: ConfigService,
@@ -44,13 +45,13 @@ export class AuthService {
     const createdUser = await this.userService.create(user);
 
     // // Автоматически создаем личное пространство пользователя
-    // await this.spaceService.create(
-    //   {
-    //     name: `${createdUser.username} space`,
-    //   },
-    //   createdUser.id,
-    //   true,
-    // );
+    await this.spaceService.create(
+      {
+        name: `${createdUser.username} space`,
+      },
+      createdUser.id,
+      true,
+    );
 
     return [createdUser, await this.login(createdUser, userAgent)] as const;
   }

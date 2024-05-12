@@ -28,10 +28,12 @@ export class SpaceService {
     return new SpaceResponseDto(space);
   }
 
-  async update(id: string, { name }: UpdateSpaceDto) {
+  async update(id: string, { name, defaultStatusId, ownerId }: UpdateSpaceDto) {
     const space = await this.db.space.update({
       data: {
         name,
+        ownerId,
+        defaultTaskStatusId: defaultStatusId,
       },
       where: {
         id,

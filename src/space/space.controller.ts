@@ -93,7 +93,7 @@ export class SpaceController {
   })
   @ApiBadRequestResponse({ description: 'Ошибка валидации' })
   @ApiForbiddenResponse({ description: 'Операция не разрешена' })
-  @ApiNotFoundResponse({ description: 'Пространство не найдено' })
+  @ApiNotFoundResponse({ description: 'Сущность из запроса не найдена' })
   @ApiOperation({ summary: 'Изменение пространства задач' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
@@ -105,11 +105,32 @@ export class SpaceController {
     @Req() req: Request,
   ) {
     if (!(await this.spaceService.findOne(id))) {
-      throw new NotFoundException();
+      throw new NotFoundException('Space not found');
     }
 
     if (!(await this.spaceService.isOwner(id, req.user.id))) {
       throw new ForbiddenException();
+    }
+
+    if (
+      updateSpaceDto.ownerId &&
+      !(await this.spaceService.isMember(id, updateSpaceDto.ownerId))
+    ) {
+      throw new NotFoundException('Memeber (user) not found');
+    }
+
+    if (updateSpaceDto.defaultStatusId) {
+      const status = await this.taskStatusService.findOne(
+        updateSpaceDto.defaultStatusId,
+      );
+
+      if (!status) {
+        throw new NotFoundException('Memeber (user) not found');
+      }
+
+      if (status.column.space.id !== id) {
+        throw new ForbiddenException();
+      }
     }
 
     return this.spaceService.update(id, updateSpaceDto);

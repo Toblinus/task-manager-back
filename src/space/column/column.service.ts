@@ -23,12 +23,6 @@ export class ColumnService {
     return new ColumnResponseDto(column);
   }
 
-  async createMany(spaceId: string, columnNames: string[]) {
-    await this.db.columnSpace.createMany({
-      data: columnNames.map((name) => ({ name, spaceId })),
-    });
-  }
-
   async findAll(spaceId: string) {
     const columns = await this.db.columnSpace.findMany({
       where: {

@@ -29,6 +29,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { SpaceService } from 'src/space/space.service';
 import { CommentsListResponseDto } from 'src/task/comment/dto/comments-list-response.dto';
 import { CommentService } from 'src/task/comment/comment.service';
+import { SpaceListResponse } from 'src/space/dto/space-list-response.dto';
 
 @ApiTags('Users')
 @Controller('users')
@@ -145,12 +146,13 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: 'Пространства задач',
+    type: SpaceListResponse,
   })
   @ApiResponse({
     status: 401,
     description: 'Пользователь не авторизован',
   })
-  @ApiOperation({ summary: 'Получение всех пространств пользователя' })
+  @ApiOperation({ summary: 'Получение всех пространств текущего пользователя' })
   @ApiBearerAuth()
   @UseGuards(JwtAuthGuard)
   @Get('current/space')
@@ -162,6 +164,7 @@ export class UserController {
   @ApiResponse({
     status: 200,
     description: 'Пространства задач',
+    type: SpaceListResponse,
   })
   @ApiNotFoundResponse({ description: 'Пользователь не найден' })
   @ApiOperation({ summary: 'Получение всех пространств пользователя' })

@@ -38,6 +38,7 @@ import { TaskStatusService } from './task-status/task.status.service';
 import { TaskStatusResponseDto } from './task-status/dto/task-status-response.dto';
 import { CreateTaskStatusDto } from './task-status/dto/create-task-status.dto';
 import { TaskStatusesListResponseDto } from './task-status/dto/task-statuses-list-response.dto';
+import { SpaceResponseDto } from './dto/space-response.dto';
 
 @ApiTags('Space')
 @Controller('space')
@@ -52,6 +53,7 @@ export class SpaceController {
   @ApiResponse({
     status: 201,
     description: 'Пространство задач создано',
+    type: SpaceResponseDto,
   })
   @ApiResponse({
     status: 401,
@@ -70,6 +72,7 @@ export class SpaceController {
   @ApiResponse({
     status: 200,
     description: 'Пространство задач',
+    type: SpaceResponseDto,
   })
   @ApiBadRequestResponse({ description: 'Ошибка валидации' })
   @ApiNotFoundResponse({ description: 'Пространство не найдено' })
@@ -86,6 +89,7 @@ export class SpaceController {
   @ApiResponse({
     status: 200,
     description: 'Пространство задач обновлено',
+    type: SpaceResponseDto,
   })
   @ApiResponse({
     status: 401,

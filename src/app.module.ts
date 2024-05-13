@@ -6,6 +6,7 @@ import { SpaceModule } from './space/space.module';
 import { DatabaseModule } from './database/database.module';
 import { ConfigModule } from './config/config.module';
 import { TaskModule } from './task/task.module';
+import { NotificationModule } from './notification/notification.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { TaskModule } from './task/task.module';
     SpaceModule,
     TaskModule,
     ValidatorModule,
+    NotificationModule,
   ],
 })
 export class AppModule {}

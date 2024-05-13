@@ -22,6 +22,7 @@ import { JwtRefreshAuthGuard } from './guards/jwt-refresh-auth.guard';
 import { UserTokensResponseDto } from './dto/user-token-response.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
+import { NotificationService } from 'src/notification/notification.service';
 
 @ApiTags('Auth')
 @Controller('auth')
@@ -29,6 +30,7 @@ export class AuthController {
   constructor(
     private authService: AuthService,
     private userService: UserService,
+    private notification: NotificationService,
   ) {}
 
   @ApiTags('PublicApi')
@@ -60,10 +62,16 @@ export class AuthController {
       throw new BadRequestException();
     }
 
-    const tokens = await this.authService.login(
+    const { session, tokens } = await this.authService.login(
       user,
       request.headers['user-agent'],
     );
+
+    this.notification.send(user.id, {
+      type: 'LOGIN',
+      payload: session,
+    });
+
     return tokens;
   }
 
@@ -78,7 +86,7 @@ export class AuthController {
   @Post('/signup')
   async registry(@Body() createUser: CreateUserDto, @Req() request: Request) {
     try {
-      const [, tokens] = await this.authService.registry(
+      const [, { tokens }] = await this.authService.registry(
         createUser,
         request.headers['user-agent'],
       );

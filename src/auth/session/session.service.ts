@@ -61,6 +61,7 @@ export class SessionService {
       },
       data: {
         usedAt: new Date(),
+        series: crypto.randomUUID(),
       },
     });
   }

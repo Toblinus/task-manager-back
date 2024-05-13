@@ -119,6 +119,7 @@ model HistoryRecord {
 
 model UserSession {
   id        String   @id @default(uuid())
+  series    String   @default(uuid())
   userId    String   @map("user_id")
   userAgent String   @map("user_agent")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamp()
@@ -132,7 +133,7 @@ model Notification {
   id          String           @id @default(uuid())
   recipientId String           @map("recipient_id")
   isViewed    Boolean          @default(false)
-  payload     Json             @db.Json
+  payload     Json?            @db.Json
   type        NotificationType
   recipient   User             @relation(fields: [recipientId], references: [id])
 
@@ -148,4 +149,10 @@ enum HistoryRecordType {
 
 enum NotificationType {
   INFO
+  LOGIN
+  ADD_TO_SPACE
+  REMOVE_FROM_SPACE
+  TASK_ASSIGNED
+  COMMENT_TASK
+  SUSPICIOUS_SESSION
 }

@@ -7,6 +7,7 @@ import type { Request } from 'express';
 import { SessionService } from 'src/auth/session/session.service';
 import type { UserWithSession } from '../types';
 import { ConfigService } from 'src/config/config.service';
+import { NotificationService } from 'src/notification/notification.service';
 
 @Injectable()
 export class JwtRefreshStrategy extends PassportStrategy(
@@ -16,6 +17,7 @@ export class JwtRefreshStrategy extends PassportStrategy(
   constructor(
     private userService: UserService,
     private sessionService: SessionService,
+    private notifications: NotificationService,
     configService: ConfigService,
   ) {
     super({
@@ -42,8 +44,14 @@ export class JwtRefreshStrategy extends PassportStrategy(
       throw new UnauthorizedException();
     }
 
-    if (currentUserAgent !== session.userAgent.raw) {
-      // TODO: notify
+    if (
+      currentUserAgent !== session.userAgent.raw ||
+      payload.series !== session.series
+    ) {
+      this.notifications.send(session.userId, {
+        type: 'SUSPICIOUS_SESSION',
+        payload: session,
+      });
       throw new UnauthorizedException();
     }
 

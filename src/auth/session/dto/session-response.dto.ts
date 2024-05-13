@@ -25,11 +25,17 @@ export class SessionResponseDto {
   })
   usedAt: Date;
 
+  @ApiProperty({
+    description: 'Серия токенов, привязанных к токенц',
+  })
+  series: string;
+
   constructor(session: UserSession) {
     this.id = session.id;
     this.userAgent = new UserAgentDto(session.userAgent);
     this.userId = session.userId;
     this.usedAt = session.usedAt;
     this.createdAt = session.createdAt;
+    this.series = session.series;
   }
 }

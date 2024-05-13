@@ -34,7 +34,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     const session = await this.sessionService.getById(payload.session);
-    if (!session) {
+    if (!session || payload.series !== session.series) {
       throw new UnauthorizedException();
     }
 

@@ -10,6 +10,8 @@ import {
   ParseUUIDPipe,
   Patch,
   Req,
+  Res,
+  Sse,
   UseGuards,
 } from '@nestjs/common';
 import { UserService } from './user.service';
@@ -23,21 +25,23 @@ import {
 } from '@nestjs/swagger';
 import { UserResonseDto } from './dto/user-response.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { UsersListResponseDto } from './dto/users-list-response.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { SpaceService } from 'src/space/space.service';
 import { CommentsListResponseDto } from 'src/task/comment/dto/comments-list-response.dto';
 import { CommentService } from 'src/task/comment/comment.service';
 import { SpaceListResponse } from 'src/space/dto/space-list-response.dto';
+import { NotificationService } from 'src/notification/notification.service';
 
 @ApiTags('Users')
 @Controller('users')
 export class UserController {
   constructor(
-    private userService: UserService,
-    private spaceService: SpaceService,
+    private readonly userService: UserService,
+    private readonly spaceService: SpaceService,
     private readonly commentService: CommentService,
+    private readonly notification: NotificationService,
   ) {}
 
   @ApiResponse({
@@ -199,5 +203,28 @@ export class UserController {
     }
 
     return this.commentService.findByUser(id);
+  }
+
+  @ApiResponse({
+    status: 200,
+    description: 'Подписка установлена',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Пользователь не авторизован',
+  })
+  @ApiOperation({ summary: 'Подписка на события пользователя' })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard)
+  @Sse('/current/events')
+  async sse(@Req() req: Request, @Res() res: Response) {
+    const userId = req.user.id;
+    const stream = this.notification.createStream(userId);
+
+    res.addListener('close', () => {
+      this.notification.removeStream(userId);
+    });
+
+    return stream;
   }
 }

@@ -15,6 +15,8 @@ export type TSuccessTokenPayload = {
   sub: string;
   /** UUID сессии */
   session: string;
+  /** Серия токена */
+  series: string;
 };
 
 export type TRefreshTokenPayload = {
@@ -22,6 +24,8 @@ export type TRefreshTokenPayload = {
   session: string;
   /** Значение из заголовка user-agent */
   useragent: string;
+  /** Серия токена */
+  series: string;
 };
 
 @Injectable()
@@ -37,7 +41,10 @@ export class AuthService {
   async login(user: UserWithoutPassword, userAgent: string) {
     const session = await this.sessionService.create(user.id, userAgent);
 
-    return await this.generateTokens(session);
+    return {
+      session: new SessionResponseDto(session),
+      tokens: await this.generateTokens(session),
+    };
   }
 
   async registry(user: CreateUserDto, userAgent: string) {
@@ -68,6 +75,7 @@ export class AuthService {
     const successTokenPayload: TSuccessTokenPayload = {
       sub: session.userId,
       session: session.id,
+      series: session.series,
     };
     const accessToken = await this.jwtService.signAsync(successTokenPayload, {
       expiresIn: '15m',
@@ -76,6 +84,7 @@ export class AuthService {
 
     const refreshTokenPayload: TRefreshTokenPayload = {
       session: session.id,
+      series: session.series,
       useragent:
         typeof session.userAgent === 'string'
           ? session.userAgent

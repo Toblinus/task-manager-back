@@ -55,7 +55,7 @@ export class SessionService {
   }
 
   async updateUsedTime(id: string) {
-    await this.db.userSession.update({
+    const session = await this.db.userSession.update({
       where: {
         id,
       },
@@ -64,6 +64,8 @@ export class SessionService {
         series: crypto.randomUUID(),
       },
     });
+
+    return new SessionResponseDto(session);
   }
 
   async isOwner(sessionId: string, userId: string) {

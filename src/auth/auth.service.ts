@@ -64,7 +64,8 @@ export class AuthService {
   }
 
   async refreshToken(session: UserSession | SessionResponseDto) {
-    return await this.generateTokens(session);
+    const newSession = await this.sessionService.updateUsedTime(session.id);
+    return await this.generateTokens(newSession);
   }
 
   async logout(session: UserSession | SessionResponseDto) {
@@ -94,8 +95,6 @@ export class AuthService {
       expiresIn: '7d',
       secret: this.configService.getRefreshTokenSecret('private'),
     });
-
-    await this.sessionService.updateUsedTime(session.id);
 
     return {
       accessToken,
